@@ -1,41 +1,63 @@
 <template>
-  <table id="tableGames">
-    <thead>
-      <tr>
-        <th v-for="(key, i) in headTable" :key="i" v-text="key" />
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(game, i) in juegos" :key="i">
-        <td
-          v-for="(key, j) in keysGame"
-          :key="j"
-          :style="{ color: game.color }"
-          v-text="parseText(game, key)"
-        />
-      </tr>
-    </tbody>
-  </table>
+  <section id="tableGames">
+    <table>
+      <thead>
+        <tr>
+          <th v-for="(key, i) in keysGame" :key="i" v-text="capitalize(key)" />
+          <th v-text="`Acciones`" />
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="game in games" :key="game.codigo">
+          <td
+            v-for="(key, i) in keysGame"
+            :key="i"
+            :style="{ color: game.color }"
+          >
+            <select v-if="key == 'color'" @change="changeColor(game, $event)">
+              <option
+                v-for="(color, indexColor) in colorsGames"
+                :key="indexColor"
+                :selected="game.color == color"
+                :value="color"
+                v-text="capitalize(dictionaryColors[color])"
+              />
+            </select>
+            <template v-else>{{ parseText(game, key) }}</template>
+          </td>
+          <td>
+            <button @click.stop="incrementStock(game.codigo)" v-text="`+`" />
+            <button @click.stop="decrementStock(game.codigo)" v-text="`-`" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 export default {
   name: "tableGames",
   computed: {
-    ...mapState(["juegos"]),
+    ...mapState(["games", "dictionaryColors", "colorsGames"]),
     ...mapGetters(["keysGame"]),
-    headTable() {
-      return this.keysGame.map((key) =>
-        key.replace(/^[a-z]/, (s) => s.toUpperCase())
-      );
-    },
   },
   methods: {
+    ...mapActions(["incrementStock", "decrementStock", "changeColor"]),
+    changeColor(game, event) {
+      this.$store.dispatch("changeColor", {
+        codigo: game.codigo,
+        color: event.target.value,
+      });
+    },
     parseText(game, key) {
       return key == "precio"
         ? "$" + Number(game[key]).toLocaleString("es-CL")
         : game[key];
+    },
+    capitalize(word) {
+      return word.replace(/^[a-z]/g, (s) => s.toUpperCase());
     },
   },
 };
